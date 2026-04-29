@@ -23,19 +23,19 @@
 \definecolor{codestr}{RGB}{180,40,40}
 
 \lstset{
-backgroundcolor=\color{codebg},
-basicstyle=\ttfamily\small,
-keywordstyle=\color{codekw}\bfseries,
-commentstyle=\color{codecomment}\itshape,
-stringstyle=\color{codestr},
-breaklines=true,
-frame=single,
-framerule=0.4pt,
-rulecolor=\color{gray!40},
-language=Python,
-showstringspaces=false,
-tabsize=4,
-captionpos=b,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{codekw}\bfseries,
+  commentstyle=\color{codecomment}\itshape,
+  stringstyle=\color{codestr},
+  breaklines=true,
+  frame=single,
+  framerule=0.4pt,
+  rulecolor=\color{gray!40},
+  language=Python,
+  showstringspaces=false,
+  tabsize=4,
+  captionpos=b,
 }
 
 % Section formatting
@@ -46,8 +46,8 @@ captionpos=b,
 
 % ── Title Page ───────────────────────────
 \title{
-\textbf{Character-Level Transformer for Text Generation} \\[0.4em]
-\large Lab 5 – Extra Credit Report
+  \textbf{Character-Level Transformer for Text Generation} \\[0.4em]
+  \large Lab 5 – Extra Credit Report
 }
 \author{Karthick Sunil}
 \date{\today}
@@ -73,18 +73,18 @@ The model operates at the character level: given a context window of previous ch
 TinyShakespeare contains roughly 1.1 million characters drawn from several of Shakespeare’s plays, concatenated together. The vocabulary is simply the set of unique characters in the text – 65 in total, including both cases of letters, punctuation, spaces and newlines.
 
 \begin{table}[H]
-\centering
-\begin{tabular}{ll}
-\toprule
-\textbf{Property} & \textbf{Value} \\
-\midrule
-Total characters & 1 115 394 \\
-Vocabulary size & 65 \\
-Training split & 90\% (1 003 854 chars) \\
-Validation split & 10\% (111 540 chars) \\
-\bottomrule
-\end{tabular}
-\caption{Basic statistics of the TinyShakespeare dataset.}
+  \centering
+  \begin{tabular}{ll}
+    \toprule
+    \textbf{Property} & \textbf{Value} \\
+    \midrule
+    Total characters  & 1 115 394 \\
+    Vocabulary size   & 65 \\
+    Training split    & 90\% (1 003 854 chars) \\
+    Validation split  & 10\% (111 540 chars) \\
+    \bottomrule
+  \end{tabular}
+  \caption{Basic statistics of the TinyShakespeare dataset.}
 \end{table}
 
 Character–index mappings are built on the fly, and encoding/decoding functions are one‑liners:
@@ -94,7 +94,7 @@ encode = lambda s: [stoi[c] for c in s]
 decode = lambda l: "".join([itos[i] for i in l])
 \end{lstlisting}
 
-During training, mini‑batches are constructed by randomly sampling start positions in the training (or validation) set and extracting sequences of length \texttt{BLOCK_SIZE}. The target is the same sequence shifted by one position – the model learns to predict the next character at every time step.
+During training, mini‑batches are constructed by randomly sampling start positions in the training (or validation) set and extracting sequences of length \texttt{BLOCK\_SIZE}. The target is the same sequence shifted by one position – the model learns to predict the next character at every time step.
 
 % ══════════════════════════════════════════════════════════
 \section{Model Architecture}
@@ -105,10 +105,10 @@ The architecture follows the decoder‑only design introduced in \textit{Attenti
 \subsection{High‑level flow}
 
 \[
-x \;\longrightarrow\; \text{TokenEmb} + \text{PosEmb}
-\;\longrightarrow\; N \times \text{TransformerBlock}
-\;\longrightarrow\; \text{LayerNorm}
-\;\longrightarrow\; \text{Linear} \;\longrightarrow\; \text{logits}
+  x \;\longrightarrow\; \text{TokenEmb} + \text{PosEmb}
+    \;\longrightarrow\; N \times \text{TransformerBlock}
+    \;\longrightarrow\; \text{LayerNorm}
+    \;\longrightarrow\; \text{Linear} \;\longrightarrow\; \text{logits}
 \]
 
 The token and positional embeddings are summed and passed through a stack of $N$ transformer blocks. A final layer norm and a linear projection map the output to logit scores over the vocabulary.
@@ -118,16 +118,16 @@ The token and positional embeddings are summed and passed through a stack of $N$
 This is the core component. Given an input $X \in \mathbb{R}^{B \times T \times d}$, a single fused linear projection computes queries, keys and values:
 
 \[
-[Q, K, V] = X W*{QKV}, \qquad W*{QKV} \in \mathbb{R}^{d \times 3d}
+  [Q, K, V] = X W_{QKV}, \qquad W_{QKV} \in \mathbb{R}^{d \times 3d}
 \]
 
 These are split and reshaped into $h$ heads. Scaled dot‑product attention is then applied per head:
 
 \[
-\text{Attention}(Q, K, V) = \text{softmax}\!\left(\frac{QK^{\top}}{\sqrt{d_k}} + M\right)V
+  \text{Attention}(Q, K, V) = \text{softmax}\!\left(\frac{QK^{\top}}{\sqrt{d_k}} + M\right)V
 \]
 
-The lower‑triangular mask $M$ (filled with $-\infty$ above the diagonal) ensures that each position can only attend to itself and earlier positions – a critical requirement for autoregressive training. The mask is stored as a non‑trainable \texttt{register_buffer} so it automatically moves to the correct device.
+The lower‑triangular mask $M$ (filled with $-\infty$ above the diagonal) ensures that each position can only attend to itself and earlier positions – a critical requirement for autoregressive training. The mask is stored as a non‑trainable \texttt{register\_buffer} so it automatically moves to the correct device.
 
 After the attention computation, the heads are concatenated and projected back to dimension $d$ via an output matrix $W_O$.
 
@@ -136,7 +136,7 @@ After the attention computation, the heads are concatenated and projected back t
 Each transformer block also contains a position‑wise two‑layer MLP with a GELU non‑linearity:
 
 \[
-\text{FFN}(x) = W_2 \; \text{GELU}(W_1 x)
+  \text{FFN}(x) = W_2 \; \text{GELU}(W_1 x)
 \]
 
 The inner dimension is $4d$ (the standard expansion factor). GELU is preferred over ReLU because its smooth gradients tend to improve training stability in language models.
@@ -147,16 +147,16 @@ The block applies layer normalisation \emph{before} the attention and FFN sublay
 
 \begin{lstlisting}
 def forward(self, x):
-x = x + self.attn(self.ln1(x)) # residual + attention
-x = x + self.ffn(self.ln2(x)) # residual + FFN
-return x
+    x = x + self.attn(self.ln1(x))   # residual + attention
+    x = x + self.ffn(self.ln2(x))    # residual + FFN
+    return x
 \end{lstlisting}
 
 Pre‑LN is known to produce more stable gradients than the original post‑LN arrangement, especially as depth increases.
 
 \subsection{Weight Tying}
 
-The output projection (\texttt{lm_head}) shares its weight matrix with the token embedding table. This reduces the parameter count by $\approx V \cdot d$ and is motivated by the observation that the embedding and un‑embedding matrices should capture the same semantic space.
+The output projection (\texttt{lm\_head}) shares its weight matrix with the token embedding table. This reduces the parameter count by $\approx V \cdot d$ and is motivated by the observation that the embedding and un‑embedding matrices should capture the same semantic space.
 
 \begin{lstlisting}
 self.tok_emb.weight = self.lm_head.weight
@@ -165,25 +165,25 @@ self.tok_emb.weight = self.lm_head.weight
 \subsection{Hyperparameters \& Parameter Count}
 
 \begin{table}[H]
-\centering
-\begin{tabular}{ll}
-\toprule
-\textbf{Hyperparameter} & \textbf{Value} \\
-\midrule
-\texttt{D_MODEL} & 256 \\
-\texttt{N_HEADS} & 4 \\
-\texttt{N_LAYERS} & 4 \\
-\texttt{D_FF} & 1024 \\
-\texttt{BLOCK_SIZE}& 128 \\
-\texttt{BATCH_SIZE}& 32 \\
-\texttt{DROPOUT} & 0.2 \\
-\textbf{Total parameters} & $\approx 6.3$ M \\
-\bottomrule
-\end{tabular}
-\caption{Final model configuration.}
+  \centering
+  \begin{tabular}{ll}
+    \toprule
+    \textbf{Hyperparameter} & \textbf{Value} \\
+    \midrule
+    \texttt{D\_MODEL}   & 256 \\
+    \texttt{N\_HEADS}   & 4   \\
+    \texttt{N\_LAYERS}  & 4   \\
+    \texttt{D\_FF}      & 1024 \\
+    \texttt{BLOCK\_SIZE}& 128 \\
+    \texttt{BATCH\_SIZE}& 32  \\
+    \texttt{DROPOUT}    & 0.2 \\
+    \textbf{Total parameters} & $\approx 6.3$ M \\
+    \bottomrule
+  \end{tabular}
+  \caption{Final model configuration.}
 \end{table}
 
-\noindent\textit{Note:} The initial configuration (\texttt{D_MODEL=384}, \texttt{BLOCK_SIZE=256}, \texttt{BATCH_SIZE=64}) caused an out‑of‑memory error on the RTX 3050 (3.68 GB available). The reduced hyperparameters above fit comfortably within $\sim 1.5$ GB of VRAM.
+\noindent\textit{Note:} The initial configuration (\texttt{D\_MODEL=384}, \texttt{BLOCK\_SIZE=256}, \texttt{BATCH\_SIZE=64}) caused an out‑of‑memory error on the RTX 3050 (3.68 GB available). The reduced hyperparameters above fit comfortably within $\sim 1.5$ GB of VRAM.
 
 % ══════════════════════════════════════════════════════════
 \section{Training}
@@ -193,8 +193,8 @@ self.tok_emb.weight = self.lm_head.weight
 The model minimises the average cross‑entropy loss over all positions in a batch:
 
 \[
-\mathcal{L} = -\frac{1}{B\,T} \sum*{b=1}^{B}\sum*{t=1}^{T}
-\log P\bigl(x*{b,t+1} \mid x*{b,1:t}\bigr)
+  \mathcal{L} = -\frac{1}{B\,T} \sum_{b=1}^{B}\sum_{t=1}^{T}
+                \log P\bigl(x_{b,t+1} \mid x_{b,1:t}\bigr)
 \]
 
 \subsection{Optimiser and Learning‑Rate Schedule}
@@ -202,12 +202,12 @@ The model minimises the average cross‑entropy loss over all positions in a bat
 AdamW ($\beta_1=0.9$, $\beta_2=0.999$, weight decay built into the optimiser) was used with a base learning rate of $3\times10^{-4}$. The learning rate follows a cosine decay with a linear warm‑up of 100 steps:
 
 \[
-\eta(t) =
-\begin{cases}
-\eta*{\max} \cdot \dfrac{t}{t*{\text{warmup}}}, & t < t*{\text{warmup}} \\[1em]
-\dfrac{\eta*{\max}}{2}\left(1 + \cos\!\left(\dfrac{\pi\,(t - t*{\text{warmup}})}
-{T - t*{\text{warmup}}}\right)\right), & t \ge t\_{\text{warmup}}
-\end{cases}
+  \eta(t) =
+  \begin{cases}
+    \eta_{\max} \cdot \dfrac{t}{t_{\text{warmup}}}, & t < t_{\text{warmup}} \\[1em]
+    \dfrac{\eta_{\max}}{2}\left(1 + \cos\!\left(\dfrac{\pi\,(t - t_{\text{warmup}})}
+                                      {T - t_{\text{warmup}}}\right)\right), & t \ge t_{\text{warmup}}
+  \end{cases}
 \]
 
 Gradients are clipped to a maximum norm of $1.0$ to prevent large updates from destabilising training.
@@ -223,9 +223,9 @@ The model was trained for 5000 steps. Loss was evaluated every 500 steps on 200 
 \subsection{Loss Curves}
 
 \begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{loss_plot.png}
-\caption{Training and validation cross‑entropy loss over 5000 steps.}
+  \centering
+  \includegraphics[width=0.85\textwidth]{loss_plot.png}
+  \caption{Training and validation cross‑entropy loss over 5000 steps.}
 \end{figure}
 
 The training and validation losses track each other closely throughout training, indicating no significant overfitting. The final validation loss of approximately 1.75 is reasonable for a character‑level model of this size; it shows the model has captured the basic structure of the language well.
